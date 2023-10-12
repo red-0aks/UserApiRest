@@ -2,6 +2,7 @@ package com.example.UserApiRest.controller;
 
 import com.example.UserApiRest.dto.ResponseDTO;
 import com.example.UserApiRest.dto.SuccessDTO;
+import com.example.UserApiRest.dto.UserDTO;
 import com.example.UserApiRest.model.User;
 import com.example.UserApiRest.service.UserService;
 import org.junit.jupiter.api.Test;
@@ -53,14 +54,14 @@ class UserControllerTest {
 
     @Test
     void test_getAllUsers() {
-        User user1 = new User();
-        List<User> userList = new ArrayList<>();
+        UserDTO user1 = new UserDTO();
+        List<UserDTO> userList = new ArrayList<>();
         userList.add(user1);
 
-        when(userService.getAllUser()).thenReturn(userList);
+        when(userService.getAllUsers()).thenReturn(userList);
 
         ResponseEntity<?> responseEntity = userController.getAllUsers();
-        verify(userService).getAllUser();
+        verify(userService).getAllUsers();
 
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
         assertEquals(userList, responseEntity.getBody());
@@ -68,14 +69,14 @@ class UserControllerTest {
 
     @Test
     void test_findUserByNombre() {
-        String nombre = "nombre";
-        User user = new User();
+        UUID userId = UUID.randomUUID();
+        UserDTO user = new UserDTO();
         user.setNombre("nombre");
 
-        when(userService.findUserByNombre(nombre)).thenReturn(user);
+        when(userService.findUserByUUID(userId)).thenReturn(user);
 
-        ResponseEntity<?> responseEntity = userController.findUserByNombre(nombre);
-        verify(userService).findUserByNombre(nombre);
+        ResponseEntity<?> responseEntity = userController.findUserByUUID(userId);
+        verify(userService).findUserByUUID(userId);
 
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
         assertEquals(user,responseEntity.getBody());
@@ -85,12 +86,19 @@ class UserControllerTest {
     void test_updateUser() {
         User user = new User();
         UUID userId = UUID.randomUUID();
+        user.setCorreo("correo@example.com");
+        user.setContrasenia("password1234");
+
+        when(userService.isValidCorreo(user.getCorreo())).thenReturn(true);
+        when(userService.isValidPassword(user.getContrasenia())).thenReturn(true);
 
         ResponseDTO responseDTO = new SuccessDTO("Se ha actualizado el usuario");
         when(userService.updateUser(userId, user)).thenReturn(responseDTO);
 
         ResponseEntity<?> responseEntity = userController.updateUser(userId, user);
         verify(userService).updateUser(userId, user);
+        verify(userService).isValidCorreo(user.getCorreo());
+        verify(userService).isValidPassword(user.getContrasenia());
 
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
         assertEquals(responseDTO, responseEntity.getBody());

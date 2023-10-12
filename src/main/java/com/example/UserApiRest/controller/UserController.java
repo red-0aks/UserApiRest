@@ -3,13 +3,11 @@ package com.example.UserApiRest.controller;
 import com.example.UserApiRest.RegexValidationEnum;
 import com.example.UserApiRest.dto.ErrorResponseDTO;
 import com.example.UserApiRest.dto.ResponseDTO;
+import com.example.UserApiRest.dto.UserDTO;
 import com.example.UserApiRest.model.User;
 import com.example.UserApiRest.service.UserService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -43,6 +41,9 @@ public class UserController {
                 ResponseDTO errorResponse = new ErrorResponseDTO(mensaje);
                 return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
             }
+        } catch(DataIntegrityViolationException e){
+            ResponseDTO errorResponse = new ErrorResponseDTO(e.getMessage());
+            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
         } catch(Exception e) {
             ResponseDTO errorResponse = new ErrorResponseDTO(e.getMessage());
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -52,7 +53,7 @@ public class UserController {
     @GetMapping
     public ResponseEntity<?> getAllUsers(){
         try{
-            List<User> userList = userService.getAllUser();
+            List<UserDTO> userList = userService.getAllUsers();
             if(!userList.isEmpty()){
                 return new ResponseEntity<>(userList, HttpStatus.OK);
             } else {
@@ -66,12 +67,12 @@ public class UserController {
         }
     }
 
-    @GetMapping("/{nombre}")
-    public ResponseEntity<ResponseDTO> findUserByNombre(@PathVariable String nombre){
+    @GetMapping("/{userId}")
+    public ResponseEntity<ResponseDTO> findUserByUUID(@PathVariable UUID userId){
         try {
-            User user = userService.findUserByNombre(nombre);
-            if(user != null){
-                return new ResponseEntity<>(user, HttpStatus.OK);
+            ResponseDTO response = userService.findUserByUUID(userId);
+            if(response != null){
+                return new ResponseEntity<>(response, HttpStatus.OK);
             } else {
                 ResponseDTO errorResponse = new ErrorResponseDTO("No se ha encontrado el usuario en la base de datos.");
                 return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
@@ -85,14 +86,29 @@ public class UserController {
     @PutMapping("/{userId}")
     public ResponseEntity<?> updateUser(@PathVariable UUID userId, @RequestBody User user){
         try {
-            ResponseDTO response;
-            response = userService.updateUser(userId, user);
-            if(response != null){
-                return new ResponseEntity<>(response, HttpStatus.OK);
+            String mensaje = "";
+            Boolean isValidCorreo = userService.isValidCorreo(user.getCorreo());
+            Boolean isValidPassword = userService.isValidPassword(user.getContrasenia());
+            if(isValidCorreo && isValidPassword){
+                ResponseDTO response;
+                response = userService.updateUser(userId, user);
+                if(response != null){
+                    return new ResponseEntity<>(response, HttpStatus.OK);
+                } else {
+                    ResponseDTO errorResponse = new ErrorResponseDTO("No se ha encontrado el id de usuario en la base de datos.");
+                    return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+                }
             } else {
-                ResponseDTO errorResponse = new ErrorResponseDTO("No se ha encontrado el id de usuario en la base de datos.");
-                return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+                if(!isValidCorreo){
+                    mensaje += RegexValidationEnum.EMAIL.getErrorMessage();
+                }
+                if(!isValidPassword){
+                    mensaje += RegexValidationEnum.PASSWORD.getErrorMessage();
+                }
+                ResponseDTO errorResponse = new ErrorResponseDTO(mensaje);
+                return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
             }
+
         } catch(Exception e){
             ResponseDTO errorResponse = new ErrorResponseDTO(e.getMessage());
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -102,14 +118,39 @@ public class UserController {
     @PatchMapping("/{userId}")
     public ResponseEntity<?> updateUserParcially(@PathVariable UUID userId, @RequestBody Map<String, Object> updates){
         try{
-            ResponseDTO response;
-            response = userService.updateUserParcially(userId, updates);
-            if(response != null){
-                return new ResponseEntity<>(response, HttpStatus.OK);
-            } else {
-                ResponseDTO errorResponse = new ErrorResponseDTO("No se ha encontrado el id de usuario en la base de datos.");
-                return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+            String mensaje = "";
+            boolean isValidCorreo = true;
+            boolean isValidPassword = true;
+            if(updates.containsKey("correo") || updates.containsKey("contrasenia")){
+                if(updates.containsKey("correo")){
+                    String correo = (String) updates.get("correo");
+                    isValidCorreo = userService.isValidCorreo(correo);
+                }
+                if(updates.containsKey("contrasenia")){
+                    String password = (String) updates.get("contrasenia");
+                    isValidPassword = userService.isValidPassword(password);
+                }
             }
+            if(isValidCorreo && isValidPassword){
+                ResponseDTO response;
+                response = userService.updateUserParcially(userId, updates);
+                if(response != null){
+                    return new ResponseEntity<>(response, HttpStatus.OK);
+                } else {
+                    ResponseDTO errorResponse = new ErrorResponseDTO("No se ha encontrado el id de usuario en la base de datos.");
+                    return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+                }
+            } else {
+                if(!isValidCorreo){
+                    mensaje += RegexValidationEnum.EMAIL.getErrorMessage();
+                }
+                if(!isValidPassword){
+                    mensaje += RegexValidationEnum.PASSWORD.getErrorMessage();
+                }
+                ResponseDTO errorResponse = new ErrorResponseDTO(mensaje);
+                return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+            }
+
         } catch (Throwable e){
             ResponseDTO errorResponse = new ErrorResponseDTO(e.getMessage());
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);

@@ -1,51 +1,22 @@
-package com.example.UserApiRest.model;
-
-import com.example.UserApiRest.dto.ResponseDTO;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.persistence.*;
+package com.example.UserApiRest.dto;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-@Entity
-@Table(name = "usuario")
-public class User extends ResponseDTO {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+public class UserDTO extends ResponseDTO{
     private UUID id;
     private String nombre;
-    @Column(unique = true)
     private String correo;
-    private String contrasenia;
-
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "user")
-    private List<Phone> telefonos = new ArrayList<>();
-
+    private List<PhoneDTO> telefonos = new ArrayList<>();
     private LocalDateTime creado;
     private LocalDateTime modificado;
     private LocalDateTime ultimoLogin;
     private boolean activo;
 
-    public void addTelefono(List<Phone> nuevosTelefonos){
-        for(Phone nuevoTelefono : nuevosTelefonos){
-            boolean existeTelefono = telefonos.stream()
-                    .anyMatch(telefono -> telefono.equals(nuevoTelefono));
+    public UserDTO(){
 
-            if(!existeTelefono){
-                telefonos.add(nuevoTelefono);
-                nuevoTelefono.setUser(this);
-            }
-        }
-    }
-
-    public void vincularTelefonos(){
-        if(!telefonos.isEmpty()){
-            for(Phone telefono : telefonos){
-                telefono.setUser(this);
-            }
-        }
     }
 
     public UUID getId() {
@@ -72,19 +43,11 @@ public class User extends ResponseDTO {
         this.correo = correo;
     }
 
-    public String getContrasenia() {
-        return contrasenia;
-    }
-
-    public void setContrasenia(String contrasenia) {
-        this.contrasenia = contrasenia;
-    }
-
-    public List<Phone> getTelefonos() {
+    public List<PhoneDTO> getTelefonos() {
         return telefonos;
     }
 
-    public void setTelefonos(List<Phone> telefonos) {
+    public void setTelefonos(List<PhoneDTO> telefonos) {
         this.telefonos = telefonos;
     }
 
