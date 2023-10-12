@@ -56,6 +56,7 @@ El manejo de dependencias utilizado es [Gradle](https://gradle.org/).
 Las dependencias utilizadas son: 
 
 * H2 Database
+* Open API v3 [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)
 * Spring Data JPA persistence
 * Spring web
 
