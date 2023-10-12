@@ -1,8 +1,8 @@
 package com.example.UserApiRest.service;
 
-import com.example.UserApiRest.dto.ResponseDTO;
-import com.example.UserApiRest.dto.SuccessDTO;
-import com.example.UserApiRest.dto.UserDTO;
+import com.example.UserApiRest.dto.*;
+import com.example.UserApiRest.helper.JwtHelper;
+import com.example.UserApiRest.helper.MapperHelper;
 import com.example.UserApiRest.model.Phone;
 import com.example.UserApiRest.model.User;
 import com.example.UserApiRest.repository.UserRepository;
@@ -29,18 +29,24 @@ public class UserService {
     private String passwordRegex;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private JwtHelper jwtHelper;
+    @Autowired
+    private MapperHelper mapperHelper;
 
     @PostConstruct
-    public void validateProperty(){
-        logger.info("--> La expresion regular para validar el correo es "+emailRegex);
-        logger.info("--> La expresion regular para validar la contraseña es "+passwordRegex);
+    public void validateProperty() {
+        logger.info("--> La expresion regular para validar el correo es " + emailRegex);
+        logger.info("--> La expresion regular para validar la contraseña es " + passwordRegex);
     }
 
-    public ResponseDTO createUser(User nuevoUsuario){
+    public ResponseDTO createUser(UserReqDTO userReq) {
         SuccessDTO response;
+        User nuevoUsuario = mapperHelper.mapUserReqDTOtoUser(userReq);
 
         nuevoUsuario.setCreado(LocalDateTime.now());
         nuevoUsuario.setUltimoLogin(LocalDateTime.now());
+        nuevoUsuario.setToken(jwtHelper.generateToken(userReq.getNombre()));
         nuevoUsuario.setActivo(true);
         nuevoUsuario.vincularTelefonos();
         User save = userRepository.save(nuevoUsuario);
@@ -49,46 +55,40 @@ public class UserService {
         response.setId(save.getId());
         response.setCreado(save.getCreado());
         response.setUltimoLogin(save.getCreado());
+        response.setToken(save.getToken());
         response.setActivo(save.isActivo());
 
         return response;
     }
 
-    public UserDTO findUserByUUID(UUID userId){
+    public UserResDTO findUserByUUID(UUID userId) {
         Optional<User> user = userRepository.findById(userId);
 
-        return user.map(this::mapUsertoDTO).orElse(null);
+        return user.map(value -> mapperHelper.mapUsertoDTO(value)).orElse(null);
     }
 
-    public List<UserDTO> getAllUsers(){
+    public List<UserResDTO> getAllUsers() {
         List<User> allUsers = userRepository.findAll();
-        if(allUsers != null){
-            return mapListUsertoDTO(allUsers);
+        if (allUsers != null) {
+            return mapperHelper.mapListUsertoDTO(allUsers);
         } else {
             return null;
         }
     }
 
-    public ResponseDTO updateUser(UUID userId, User updateUser){
+    public ResponseDTO updateUser(UserUpdateReqDTO userReq) {
         ResponseDTO response;
-        Optional<User> find = userRepository.findById(userId);
-        if(find.isPresent()){
+        Optional<User> find = userRepository.findById(userReq.getId());
+        if (find.isPresent()) {
             User user = find.get();
-
+            User updatedUser = mapperHelper.mapUserUpdateReqDTOtoUser(userReq, user);
             List<Phone> existingPhones = user.getTelefonos();
+            List<Phone> updatedPhones = mapperHelper.mapListPhoneUpdateReqDTOtoPhone(userReq.getTelefonos(), userReq.getId());
 
-            user.setNombre(updateUser.getNombre());
-            user.setCorreo(updateUser.getCorreo());
-            user.setContrasenia(updateUser.getContrasenia());
+            updateUserPhones(existingPhones, updatedPhones);
+            updatedUser.setModificado(LocalDateTime.now());
 
-            updateUserPhones(existingPhones, updateUser.getTelefonos());
-
-            user.vincularTelefonos();
-            user.setModificado(LocalDateTime.now());
-            if(updateUser.getUltimoLogin() != null){
-                user.setUltimoLogin(updateUser.getUltimoLogin());
-            }
-            userRepository.save(user);
+            userRepository.save(updatedUser);
             response = new SuccessDTO("Se han aplicado las actualizaciones enviadas en el usuario.");
         } else {
             return null;
@@ -97,10 +97,10 @@ public class UserService {
         return response;
     }
 
-    private void updateUserPhones(List<Phone> existingPhones, List<Phone> updatedPhones){
+    private void updateUserPhones(List<Phone> existingPhones, List<Phone> updatedPhones) {
         for (Phone existingPhone : existingPhones) {
             for (Phone updatedPhone : updatedPhones) {
-                if (existingPhone.getId().equals(updatedPhone.getId()) && existingPhone.getUser().equals(updatedPhone.getUser())) {
+                if (existingPhone.getId().equals(updatedPhone.getId()) && existingPhone.getUser().getId().equals(updatedPhone.getUser().getId())) {
                     existingPhone.setNumero(updatedPhone.getNumero());
                     existingPhone.setCodigoCiudad(updatedPhone.getCodigoCiudad());
                     existingPhone.setCodigoPais(updatedPhone.getCodigoPais());
@@ -112,21 +112,21 @@ public class UserService {
     public ResponseDTO updateUserParcially(UUID userId, Map<String, Object> updates) throws Throwable {
         ResponseDTO response;
         Optional<User> find = userRepository.findById(userId);
-        if(find.isPresent()){
+        if (find.isPresent()) {
             User user = find.get();
             Class<?> userClass = user.getClass();
             Field[] fields = userClass.getDeclaredFields();
 
-            for(Field field : fields){
+            for (Field field : fields) {
                 field.setAccessible(true);
-                if(updates.containsKey(field.getName())){
-                    try{
+                if (updates.containsKey(field.getName())) {
+                    try {
                         Object value = field.get(user);
                         Object updatedValue = updates.get(field.getName());
                         field.set(user, updatedValue);
 
-                    } catch (IllegalAccessException e){
-                        throw new RuntimeException("Error al actualizar parcialmente el usuario").initCause(e);
+                    } catch (IllegalAccessException e) {
+                        throw new IllegalAccessException("Error al actualizar parcialmente el usuario").initCause(e);
                     }
                 }
             }
@@ -140,10 +140,10 @@ public class UserService {
         return response;
     }
 
-    public ResponseDTO deleteUser(UUID userId){
+    public ResponseDTO deleteUser(UUID userId) {
         ResponseDTO response;
         Optional<User> find = userRepository.findById(userId);
-        if(find.isPresent()){
+        if (find.isPresent()) {
             userRepository.deleteById(userId);
             response = new SuccessDTO("Se ha eliminado el usuario de la base de datos.");
         } else {
@@ -153,28 +153,13 @@ public class UserService {
         return response;
     }
 
-    public Boolean isValidCorreo(String correo){
+    public Boolean isValidCorreo(String correo) {
         return correo.matches(emailRegex);
     }
 
-    public Boolean isValidPassword(String password){
+    public Boolean isValidPassword(String password) {
         return password.matches(passwordRegex);
     }
 
-    public UserDTO mapUsertoDTO(User user){
-        UserDTO userDTO = new UserDTO();
-        mapper.map(user, userDTO);
 
-        return userDTO;
-    }
-
-    public List<UserDTO> mapListUsertoDTO(List<User> userList){
-        List<UserDTO> userDTOList = new ArrayList<>();
-        for(User user : userList){
-            UserDTO dto = new UserDTO();
-            mapper.map(user, dto);
-            userDTOList.add(dto);
-        }
-        return  userDTOList;
-    }
 }

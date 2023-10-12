@@ -1,30 +1,17 @@
-package com.example.UserApiRest.model;
+package com.example.UserApiRest.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.*;
 
-import java.util.Objects;
-
-@Entity
-@Table(name = "telefono")
-public class Phone {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class PhoneResDTO {
     private Long id;
     private String numero;
     private String codigoCiudad;
     private String codigoPais;
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User user;
+    @JsonIgnore
+    private UserResDTO user;
 
-    @Override
-    public boolean equals(Object o){
-        if(this == o) return true;
-        if(o == null || this.getClass() != o.getClass()) return false;
-        Phone phone = (Phone) o;
-        return Objects.equals(this.numero, phone.numero) ||
-               (Objects.equals(this.id, phone.id) && Objects.equals(this.user.getId(), phone.user.getId()));
+    public PhoneResDTO(){
+
     }
 
     public Long getId() {
@@ -59,11 +46,11 @@ public class Phone {
         this.codigoPais = codigoPais;
     }
 
-    public User getUser() {
+    public UserResDTO getUser() {
         return user;
     }
 
-    public void setUser(User user) {
+    public void setUser(UserResDTO user) {
         this.user = user;
     }
 }

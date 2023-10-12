@@ -1,8 +1,6 @@
 package com.example.UserApiRest.controller;
 
-import com.example.UserApiRest.dto.ResponseDTO;
-import com.example.UserApiRest.dto.SuccessDTO;
-import com.example.UserApiRest.dto.UserDTO;
+import com.example.UserApiRest.dto.*;
 import com.example.UserApiRest.model.User;
 import com.example.UserApiRest.service.UserService;
 import org.junit.jupiter.api.Test;
@@ -17,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.*;
+import java.util.zip.DataFormatException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -32,8 +31,8 @@ class UserControllerTest {
     private UserService userService;
 
     @Test
-    void test_createUser() {
-        User user = new User();
+    void test_createUser() throws DataFormatException {
+        UserReqDTO user = new UserReqDTO();
         user.setCorreo("correo@example.com");
         user.setContrasenia("password1234");
 
@@ -54,8 +53,8 @@ class UserControllerTest {
 
     @Test
     void test_getAllUsers() {
-        UserDTO user1 = new UserDTO();
-        List<UserDTO> userList = new ArrayList<>();
+        UserResDTO user1 = new UserResDTO();
+        List<UserResDTO> userList = new ArrayList<>();
         userList.add(user1);
 
         when(userService.getAllUsers()).thenReturn(userList);
@@ -70,7 +69,7 @@ class UserControllerTest {
     @Test
     void test_findUserByNombre() {
         UUID userId = UUID.randomUUID();
-        UserDTO user = new UserDTO();
+        UserResDTO user = new UserResDTO();
         user.setNombre("nombre");
 
         when(userService.findUserByUUID(userId)).thenReturn(user);
@@ -83,9 +82,10 @@ class UserControllerTest {
     }
 
     @Test
-    void test_updateUser() {
-        User user = new User();
+    void test_updateUser() throws DataFormatException {
+        UserUpdateReqDTO user = new UserUpdateReqDTO();
         UUID userId = UUID.randomUUID();
+        user.setId(userId);
         user.setCorreo("correo@example.com");
         user.setContrasenia("password1234");
 
@@ -93,10 +93,10 @@ class UserControllerTest {
         when(userService.isValidPassword(user.getContrasenia())).thenReturn(true);
 
         ResponseDTO responseDTO = new SuccessDTO("Se ha actualizado el usuario");
-        when(userService.updateUser(userId, user)).thenReturn(responseDTO);
+        when(userService.updateUser(user)).thenReturn(responseDTO);
 
-        ResponseEntity<?> responseEntity = userController.updateUser(userId, user);
-        verify(userService).updateUser(userId, user);
+        ResponseEntity<?> responseEntity = userController.updateUser(user);
+        verify(userService).updateUser(user);
         verify(userService).isValidCorreo(user.getCorreo());
         verify(userService).isValidPassword(user.getContrasenia());
 

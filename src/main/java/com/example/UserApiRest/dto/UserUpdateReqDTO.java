@@ -1,21 +1,23 @@
 package com.example.UserApiRest.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class UserDTO extends ResponseDTO{
+public class UserUpdateReqDTO {
     private UUID id;
     private String nombre;
     private String correo;
-    private List<PhoneDTO> telefonos = new ArrayList<>();
-    private LocalDateTime creado;
-    private LocalDateTime modificado;
-    private LocalDateTime ultimoLogin;
-    private boolean activo;
+    @JsonProperty("contraseña")
+    private String contrasenia;
+    private List<PhoneUpdateReqDTO> telefonos = new ArrayList<>();
 
-    public UserDTO(){
+    private LocalDateTime ultimoLogin;
+
+    public UserUpdateReqDTO(){
 
     }
 
@@ -43,28 +45,20 @@ public class UserDTO extends ResponseDTO{
         this.correo = correo;
     }
 
-    public List<PhoneDTO> getTelefonos() {
+    public String getContrasenia() {
+        return contrasenia;
+    }
+
+    public void setContrasenia(String contrasenia) {
+        this.contrasenia = contrasenia;
+    }
+
+    public List<PhoneUpdateReqDTO> getTelefonos() {
         return telefonos;
     }
 
-    public void setTelefonos(List<PhoneDTO> telefonos) {
+    public void setTelefonos(List<PhoneUpdateReqDTO> telefonos) {
         this.telefonos = telefonos;
-    }
-
-    public LocalDateTime getCreado() {
-        return creado;
-    }
-
-    public void setCreado(LocalDateTime creado) {
-        this.creado = creado;
-    }
-
-    public LocalDateTime getModificado() {
-        return modificado;
-    }
-
-    public void setModificado(LocalDateTime modificado) {
-        this.modificado = modificado;
     }
 
     public LocalDateTime getUltimoLogin() {
@@ -73,13 +67,5 @@ public class UserDTO extends ResponseDTO{
 
     public void setUltimoLogin(LocalDateTime ultimoLogin) {
         this.ultimoLogin = ultimoLogin;
-    }
-
-    public boolean isActivo() {
-        return activo;
-    }
-
-    public void setActivo(boolean activo) {
-        this.activo = activo;
     }
 }

@@ -1,20 +1,23 @@
 package com.example.UserApiRest.dto;
 
-public class PhoneDTO{
-    private Long id;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import java.util.UUID;
+
+public class PhoneUpdateReqDTO {
+    private long id;
     private String numero;
     private String codigoCiudad;
     private String codigoPais;
 
-    public PhoneDTO(){
-
+    public PhoneUpdateReqDTO() {
     }
 
-    public Long getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(long id) {
         this.id = id;
     }
 

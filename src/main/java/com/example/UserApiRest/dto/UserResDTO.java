@@ -1,52 +1,23 @@
-package com.example.UserApiRest.model;
-
-import com.example.UserApiRest.dto.ResponseDTO;
-import jakarta.persistence.*;
+package com.example.UserApiRest.dto;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-@Entity
-@Table(name = "usuario")
-public class User extends ResponseDTO {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+public class UserResDTO extends ResponseDTO{
     private UUID id;
     private String nombre;
-    @Column(unique = true)
     private String correo;
-    private String contrasenia;
-
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "user")
-    private List<Phone> telefonos = new ArrayList<>();
-
+    private List<PhoneResDTO> telefonos = new ArrayList<>();
     private LocalDateTime creado;
     private LocalDateTime modificado;
     private LocalDateTime ultimoLogin;
     private String token;
     private boolean activo;
 
-    public void addTelefonos(List<Phone> nuevosTelefonos){
-        for(Phone nuevoTelefono : nuevosTelefonos){
-            boolean existeTelefono = telefonos.stream()
-                .anyMatch(telefono -> telefono.equals(nuevoTelefono));
+    public UserResDTO(){
 
-            if(!existeTelefono){
-                telefonos.add(nuevoTelefono);
-                nuevoTelefono.setUser(this);
-            }
-        }
-        vincularTelefonos();
-    }
-
-    public void vincularTelefonos(){
-        if(!telefonos.isEmpty()){
-            for(Phone telefono : telefonos){
-                telefono.setUser(this);
-            }
-        }
     }
 
     public UUID getId() {
@@ -73,19 +44,11 @@ public class User extends ResponseDTO {
         this.correo = correo;
     }
 
-    public String getContrasenia() {
-        return contrasenia;
-    }
-
-    public void setContrasenia(String contrasenia) {
-        this.contrasenia = contrasenia;
-    }
-
-    public List<Phone> getTelefonos() {
+    public List<PhoneResDTO> getTelefonos() {
         return telefonos;
     }
 
-    public void setTelefonos(List<Phone> telefonos) {
+    public void setTelefonos(List<PhoneResDTO> telefonos) {
         this.telefonos = telefonos;
     }
 
@@ -112,7 +75,6 @@ public class User extends ResponseDTO {
     public void setUltimoLogin(LocalDateTime ultimoLogin) {
         this.ultimoLogin = ultimoLogin;
     }
-
     public String getToken() {
         return token;
     }
@@ -120,7 +82,6 @@ public class User extends ResponseDTO {
     public void setToken(String token) {
         this.token = token;
     }
-
     public boolean isActivo() {
         return activo;
     }
