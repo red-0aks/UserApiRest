@@ -1,7 +1,5 @@
 package com.example.UserApiRest.service;
 
-import com.example.UserApiRest.RegexValidationEnum;
-import com.example.UserApiRest.dto.PhoneDTO;
 import com.example.UserApiRest.dto.ResponseDTO;
 import com.example.UserApiRest.dto.SuccessDTO;
 import com.example.UserApiRest.dto.UserDTO;

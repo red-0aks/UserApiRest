@@ -1,7 +1,6 @@
 package com.example.UserApiRest.model;
 
 import com.example.UserApiRest.dto.ResponseDTO;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
